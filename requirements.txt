@@ -1,0 +1,16 @@
+streamlit-aggrid
+openpyxl
+gsheetsdb
+google-auth
+XlsxWriter
+gspread
+networkx
+parsel
+datetime
+streamlit_pandas_profiling
+july
+matplotlib
+selenium==4.2.0
+fuzzywuzzy
+gspread
+pytz
