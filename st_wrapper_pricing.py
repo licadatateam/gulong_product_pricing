@@ -242,6 +242,31 @@ def adjust_wrt_gogulong(df,
                             affiliate,
                             marketplace)
 
+def preorder_calc(qty_list : list) -> bool or float:
+    '''
+    Determines whether to preorder or not based on available
+    quantity/stocks data
+    
+    Parameters:
+    -----------
+        - qty_list : list
+            list of float or int values
+    
+    Returns:
+    --------
+        - bool or float : True/False or np.NaN if quantity data is all NaN
+    
+    '''
+    nan_count = np.sum([1 for n in qty_list if pd.isna(n)])
+    if nan_count == len(qty_list):
+        return np.NaN
+    else:
+        if np.nansum(qty_list) <= 4:
+            return True
+        else:
+            return False
+
+    
 def build_grid(df_show : pd.DataFrame):
     '''
     Configures GridOptionsBuilder
@@ -436,10 +461,10 @@ if __name__ == "__main__":
         
         # merge supplier df if uploaded files
         if df_supplier is not None:
-            qty_cols = [f'qty_{s}' for s in list(df_supplier.supplier.unique())]
-            price_cols = [f'price_{s}' for s in list(df_supplier.supplier.unique())]
+            qty_supp = [f'qty_{s}' for s in list(df_supplier.supplier.unique())]
+            price_supp = [f'price_{s}' for s in list(df_supplier.supplier.unique())]
             supplier_cols = ['similar_pattern', 'correct_specs',
-                             'brand'] + qty_cols + price_cols
+                             'brand'] + qty_supp + price_supp
             
             df_show = df_show.merge(df_supplier[supplier_cols],
                                     how = 'left',
@@ -449,20 +474,21 @@ if __name__ == "__main__":
                                                 'brand'],
                                     suffixes = ('', '_')).drop_duplicates()
             
-            selected_cols.extend(qty_cols + price_cols)
+            selected_cols.extend(qty_supp + price_supp)
         
         if check_adjusted:
             df_show = df_show.loc[df_show['GulongPH']
                                   != df_show['GulongPH_backend']]
         
         # TODO: preorder
-        
+        qty_cols = [c for c in df_show.columns if 'qty_' in c]
+        df_show['preorder'] = df_show.apply(lambda x: preorder_calc(x[qty_cols]), axis=1)
         
         # default table columns
         cols = ['model_','model','make', 'pattern', 'dimensions', 'supplier_max_price',
                 '3+1_promo_per_tire_GP25','GulongPH','GulongPH_slashed',
                 'b2b','marketplace', 'GoGulong', 'TireManila', 'PartsPro',
-                'qty_tiremanila', 'year']
+                'qty_tiremanila', 'year', 'preorder']
         
         # TODO: reorder columns (qty and price)
         
