@@ -142,7 +142,7 @@ def import_competitor_data():
     '''
     # import scraped competitor data
     try:
-        creds = st.secrets['credentials']
+        creds = st.secrets['secrets']
     except:
         with open('credentials.json') as file:
             creds = json.load(file)
