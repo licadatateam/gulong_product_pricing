@@ -19,7 +19,7 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 
 # load google service account
 try:
-    creds = st.secrets['lica_service_account']
+    creds = st.secrets['secrets']
 except:
     with open('secrets.json') as file:
         creds = json.load(file)
