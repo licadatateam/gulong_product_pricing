@@ -144,7 +144,7 @@ def import_competitor_data():
     try:
         creds = st.secrets['secrets']
     except:
-        with open('credentials.json') as file:
+        with open('secrets.json') as file:
             creds = json.load(file)
     
     # open gsheet
