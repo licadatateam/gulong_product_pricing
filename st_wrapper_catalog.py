@@ -75,12 +75,24 @@ def main():
     display_files()
     
     if st.button('Confirm'):
-        df_supplier = main_catalog.get_supplier_data_from_dict(st.session_state['files'])
         
-        # df_gulong = main_catalog.get_gulong_data()
-        # merged = main_catalog.match_df(df_gulong, df_supplier)
-        # st.write(merged)
+        if len(st.session_state['files']):
         
-        return df_supplier
+            try:
+                df_supplier = main_catalog.get_supplier_data_from_dict(st.session_state['files'])
+                
+                # df_gulong = main_catalog.get_gulong_data()
+                # merged = main_catalog.match_df(df_gulong, df_supplier)
+                # st.write(merged)
+                
+                return df_supplier
+            
+            except Exception as e:
+                st.exception(e)
+                return None
+        
+        else:
+            st.error('No supplier files were uploaded.')
+            return None
     
     
