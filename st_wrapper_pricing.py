@@ -516,7 +516,7 @@ if __name__ == "__main__":
             selected_cols = beta_multiselect.multiselect('Included columns in table:',
                                            options = data_dict['cols_option'],
                                            default = def_list)
-
+            selected_cols = list(set(selected_cols))
         
         df_show = df_final.merge(data_dict['df_final'][['model', 'GulongPH']], 
                                        how = 'left',
