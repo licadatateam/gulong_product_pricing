@@ -2,14 +2,14 @@
 """
 Spyder Editor
 
-This is a temporary script file.
+@author: Carlo Solibet
 """
 
 import pandas as pd
 import numpy as np
 from fuzzywuzzy import process, fuzz
 
-import cleaner_functions
+import cleaner_functions as clean_func
 
 def get_gulong_data() -> pd.DataFrame:
     '''
@@ -44,13 +44,17 @@ def get_gulong_data() -> pd.DataFrame:
         
         ## 3. Perform data filtering and cleaning
         df.loc[df['sale_tag']==0, 'price_gulong'] = df.loc[df['sale_tag']==0, 'srp']
-        df.loc[:, 'width'] = df.apply(lambda x: cleaner_functions.clean_width(x['width']), axis=1)
-        df.loc[:, 'aspect_ratio'] = df.apply(lambda x: cleaner_functions.clean_aspect_ratio(x['aspect_ratio']), axis=1)    
-        df.loc[:, 'diameter'] = df.apply(lambda x: cleaner_functions.clean_diameter(x['diameter']), axis=1)
-        df.loc[:, 'raw_specs'] = df.apply(lambda x: cleaner_functions.combine_specs(x['width'], x['aspect_ratio'], x['diameter'], mode = 'SKU'), axis=1)
-        df.loc[:, 'correct_specs'] = df.apply(lambda x: cleaner_functions.combine_specs(x['width'], x['aspect_ratio'], x['diameter'], mode = 'MATCH'), axis=1)
-        df.loc[:, 'name'] = df.apply(lambda x: cleaner_functions.fix_names(x['name']), axis=1)
-        df.loc[:, 'sku_name'] = df.apply(lambda x: cleaner_functions.combine_sku(str(x['brand']), 
+        # 1st pass
+        df = df[df.width.notna() & df.aspect_ratio.notna() & df.diameter.notna() & df.product_id.notna()]
+        df.loc[:, 'width'] = df.apply(lambda x: clean_func.clean_width(x['width']), axis=1)
+        df.loc[:, 'aspect_ratio'] = df.apply(lambda x: clean_func.clean_aspect_ratio(x['aspect_ratio']), axis=1)    
+        df.loc[:, 'diameter'] = df.apply(lambda x: clean_func.clean_diameter(x['diameter']), axis=1)
+        # 2nd pass
+        df = df[df.width.notna() & df.aspect_ratio.notna() & df.diameter.notna() & df.product_id.notna()]
+        df.loc[:, 'raw_specs'] = df.apply(lambda x: clean_func.combine_specs(x['width'], x['aspect_ratio'], x['diameter'], mode = 'SKU'), axis=1)
+        df.loc[:, 'correct_specs'] = df.apply(lambda x: clean_func.combine_specs(x['width'], x['aspect_ratio'], x['diameter'], mode = 'MATCH'), axis=1)
+        df.loc[:, 'name'] = df.apply(lambda x: clean_func.fix_names(x['name']), axis=1)
+        df.loc[:, 'sku_name'] = df.apply(lambda x: clean_func.combine_sku(str(x['brand']), 
                                                                str(x['width']),
                                                                str(x['aspect_ratio']),
                                                                str(x['diameter']),
@@ -58,7 +62,10 @@ def get_gulong_data() -> pd.DataFrame:
                                                                str(x['load_rating']), 
                                                                str(x['speed_rating'])), 
                                                                axis=1)
+        df['load_rating'] = df['load_rating'].astype('str')
         df = df[df.name != '-']
+        df = df.drop_duplicates(subset = ['sku_name', 'product_id', 'load_rating', 'speed_rating'], 
+                                keep = 'first')
         
     except Exception as e:
         raise e
@@ -73,7 +80,7 @@ def name_match(s, ref,
                with_brand : bool = True):
     
     try:
-        s = cleaner_functions.fix_names(s)
+        s = clean_func.fix_names(s)
         
         match = process.extractOne(s, ref.name, scorer = scorer, 
                            score_cutoff = cutoff)
@@ -157,7 +164,7 @@ def supplier_clean(ws : pd.DataFrame,
         
         # 3. standardize sizes
         # use extract dimensions from cleaner functions
-        df['correct_specs'] = df['size'].apply(lambda x: cleaner_functions.combine_specs(*cleaner_functions.clean_tire_size(x), mode = 'MATCH'))
+        df['correct_specs'] = df['size'].apply(lambda x: clean_func.combine_specs(*clean_func.clean_tire_size(x), mode = 'MATCH'))
 
         # 4. determine matching similar model names from reference
         df[['similar_pattern', 'brand']] = df.apply(lambda x: name_match(x['pattern'], df_gulong),
@@ -181,11 +188,11 @@ def supplier_clean(ws : pd.DataFrame,
         # rename columns
         df.columns = ['sku_name', 'stock']
         # extract correct specs
-        df['correct_specs'] = df['sku_name'].apply(lambda x: cleaner_functions.combine_specs(*cleaner_functions.clean_tire_size(x), mode = 'MATCH'))
+        df['correct_specs'] = df['sku_name'].apply(lambda x: clean_func.combine_specs(*clean_func.clean_tire_size(x), mode = 'MATCH'))
         # extract brand
-        df['brand'] = df['sku_name'].apply(lambda x: cleaner_functions.clean_make(x, df_gulong.brand.unique()))
+        df['brand'] = df['sku_name'].apply(lambda x: clean_func.clean_make(x, df_gulong.brand.unique()))
         # extract pattern
-        df['pattern'] = df['sku_name'].apply(lambda x: cleaner_functions.clean_model(x, df_gulong))
+        df['pattern'] = df['sku_name'].apply(lambda x: clean_func.clean_model(x, df_gulong))
         # get match similar_pattern
         df['similar_pattern'] = df['sku_name'].apply(lambda x: name_match(x, df_gulong, with_brand = False))
         
