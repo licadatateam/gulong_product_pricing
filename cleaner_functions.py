@@ -155,9 +155,12 @@ def combine_specs(w, ar, d, mode = 'SKU'):
     '175/65/R15'
     
     '''
+    w, ar, d = str(w), str(ar), str(d)
     
     if mode == 'SKU':
+        # formatting for diameter
         d = d if 'R' in d else 'R' + d 
+        # formatting for aspect ratio
         if ar != 'R':
             if '.' in ar:
                 return w + 'X' + ar + '/' + d
@@ -226,9 +229,9 @@ def clean_width(w, model = None):
     
     '''
     if pd.notna(w):
-        w = str(w).strip().upper()
+        w = clean_specs(w)[0].strip().upper()
         # detects if input has expected format
-        prefix_num = re.search('[A-Z]*[0-9]+.?[0-9]*', w)
+        prefix_num = re.search('[A-Z]*[0-9]+.?[0-9]*(?=X|/|\s)?', w)
         if prefix_num is not None:
             num_str = ''.join(re.findall('[0-9]|\.', prefix_num[0]))
             num = str(remove_trailing_zero(Decimal(num_str)))
@@ -280,33 +283,44 @@ def clean_aspect_ratio(ar, model = None):
                 '3.': '13.5',
                 '5.': '15.5',
                 '70.5': '10.5'}
-
+    
     if pd.notna(ar):
         #ar = re.sub('/', '', str(ar)).strip()
         
         # aspect ratio is faulty
         if str(ar) in ['0', 'R1', '/', 'R']:
-            return 'R'
+            result = 'R'
         # incorrect parsing osf decimal aspect ratios
         elif str(ar) in error_ar.keys():
-            return error_ar[str(ar)]
+            result = error_ar[str(ar)]
         # numeric/integer aspect ratio
         elif str(ar).isnumeric():
-            return str(ar)
+            result = str(ar)
         # alphanumeric
         elif str(ar).isalnum():
-            return ''.join(re.findall('[0-9]', str(ar)))
+            result = ''.join(re.findall('[0-9]', str(ar)))
         
         # decimal aspect ratio with trailing 0
         elif '.' in str(ar):
             #return str(remove_trailing_zero(Decimal(str(ar))))
-            return str(ar).rstrip('0')
+            result = str(ar).rstrip('0')
         
         else:
-            return np.NaN
-        
+            result = 'R'
+            
+        if any((s := sep) in ar for sep in ['/', 'X']):
+            temp = result.split(s)
+            if len(temp) > 1:
+                result = temp[1]
+            else:
+                result = temp[0]
+        else:
+            pass
+          
     else:
-        return 'R'
+        result = 'R'
+    
+    return result
 
 def clean_diameter(d):
     '''
@@ -341,6 +355,9 @@ def clean_diameter(d):
             num = str(remove_trailing_zero(Decimal(num_str)))
             suffix = num_suffix[0].split(num_str)[-1]
             return f'R{num}{suffix}'
+        else:
+            return np.NaN
+        
     else:
         return np.NaN
 
@@ -423,8 +440,10 @@ def clean_specs(x):
     else:
         # baseline correction
         x = x.upper().strip()
-        if ((match := re.search('[0-9]+(\.)?[0-9]*(X|\/|\s)?([0-9]+(\.)?[0-9]*)?(\s)*(\/|\s|\-)?[A-Z]*(\s)*[0-9]+([A-Z]+)?', x)) is not None):
-            specs =  [num[0] for n in re.split('X|Z?R|/|-', match[0]) if (num := re.search('[0-9]+(.)?[0-9]+', n.strip())) is not None]
+        if ((match := re.search('[0-9]+(\.)?[0-9]*(X|(\/)*|\s)?([0-9]+(\.)?[0-9]*)?(\s)*((\/)*|\s|\-)?[A-Z]*(\s)*[0-9]*([A-Z]+)?', x)) is not None):
+        #if ((match := re.search('[0-9]+(\.)?[0-9]*(X|(\/)*|\s)?([0-9]+(\.)?[0-9]*)?(\s)*((\/)*|\s|\-)?[A-Z]*(\s)*[0-9]+([A-Z]+)?', x)) is not None):
+            #specs =  [num[0] for n in re.split('X|Z?R|/|-', match[0]) if (num := re.search('[0-9]+(.)?[0-9]+', n.strip())) is not None]
+            specs =  [num[0] for n in re.split('X|Z?R|/|-', match[0]) if (num := re.search('[0-9]+(.)?[0-9]*', n.strip())) is not None]
             if len(specs) == 3:
                 if '.' in specs[1]:
                     specs[1] = format(float(specs[1]), '.2f')
