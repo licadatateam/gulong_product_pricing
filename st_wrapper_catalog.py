@@ -48,8 +48,8 @@ def main():
     url1 =  "http://app.redash.licagroup.ph/api/queries/131/results.csv?api_key=FqpOO9ePYQhAXrtdqsXSt2ZahnUZ2XCh3ooFogzY"
     df_data = pd.read_csv(url1)
     
-    suppliers = sorted(df_data[df_data.name.notna() &\
-                               (df_data.name != ' ')].name.unique())
+    suppliers = sorted(df_data[(df_data.name.notna()) &\
+                               (df_data.activity == 1)].name.unique())
     
     if 'files' not in st.session_state:
         st.session_state['files'] = {}
