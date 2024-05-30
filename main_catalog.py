@@ -45,12 +45,16 @@ def get_gulong_data() -> pd.DataFrame:
         ## 3. Perform data filtering and cleaning
         df.loc[df['sale_tag']==0, 'price_gulong'] = df.loc[df['sale_tag']==0, 'srp']
         # 1st pass
-        df = df[df.width.notna() & df.aspect_ratio.notna() & df.diameter.notna() & df.product_id.notna()]
+        df = df[df.width.notna() & df.aspect_ratio.notna() & df.diameter.notna() &\
+                df.product_id.notna() & (df.brand.notna() & (df.brand != ' '))]
+        
         df.loc[:, 'width'] = df.apply(lambda x: clean_func.clean_width(x['width']), axis=1)
         df.loc[:, 'aspect_ratio'] = df.apply(lambda x: clean_func.clean_aspect_ratio(x['aspect_ratio']), axis=1)    
         df.loc[:, 'diameter'] = df.apply(lambda x: clean_func.clean_diameter(x['diameter']), axis=1)
         # 2nd pass
-        df = df[df.width.notna() & df.aspect_ratio.notna() & df.diameter.notna() & df.product_id.notna()]
+        df = df[df.width.notna() & df.aspect_ratio.notna() & df.diameter.notna() &\
+                df.product_id.notna() & (df.brand.notna() & (df.brand != ' '))]
+        
         df.loc[:, 'raw_specs'] = df.apply(lambda x: clean_func.combine_specs(x['width'], x['aspect_ratio'], x['diameter'], mode = 'SKU'), axis=1)
         df.loc[:, 'correct_specs'] = df.apply(lambda x: clean_func.combine_specs(x['width'], x['aspect_ratio'], x['diameter'], mode = 'MATCH'), axis=1)
         df.loc[:, 'name'] = df.apply(lambda x: clean_func.fix_names(x['name']), axis=1)
