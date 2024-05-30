@@ -78,6 +78,9 @@ def query_gulong_data() -> pd.DataFrame:
     makes_list = clean_func.import_makes()
 
     # cleaning
+    # 1st pass
+    df_data = df_data[df_data.width.notna() & df_data.aspect_ratio.notna() &\
+                      df_data.diameter.notna() & df_data.product_id.notna()]
     df_data.loc[:, 'make'] = df_data.apply(lambda x: clean_func.clean_make(
         x['make'], makes_list, model=x['model']), axis=1)
     df_data.loc[:, 'section_width'] = df_data.apply(
@@ -88,6 +91,9 @@ def query_gulong_data() -> pd.DataFrame:
         lambda x: clean_func.clean_diameter(x['rim_size']), axis=1)
     df_data.loc[:, 'speed_rating'] = df_data.apply(
         lambda x: clean_func.clean_speed_rating(x['speed_rating']), axis=1)
+    # 2nd pass
+    df_data = df_data[df_data.width.notna() & df_data.aspect_ratio.notna() &\
+                      df_data.diameter.notna() & df_data.product_id.notna()]
     df_data.loc[:, 'model_'] = df_data.loc[:, 'model']
     
     df_data.loc[:, 'model'] = df_data.apply(lambda x: clean_func.combine_sku(x['make'],
