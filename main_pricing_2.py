@@ -61,8 +61,11 @@ def query_gulong_data() -> pd.DataFrame:
                           'product_price_date_updated'],
                            date_format = '%m/%d/%y %H:%M')
     # select columns
-    df_data = df_data[['make', 'model', 'section_width', 'aspect_ratio', 'rim_size', 'pattern', 'load_rating', 'speed_rating', 'stock', 'name', 'cost',
-                       'srp', 'promo', 'mp_price', 'b2b_price', 'supplier_price_date_updated', 'product_price_date_updated', 'supplier_id', 'sale_tag', 'product_id']]
+    df_data = df_data[['make', 'model', 'section_width', 'aspect_ratio', 'rim_size', 
+                       'pattern', 'load_rating', 'speed_rating', 'stock', 'name', 
+                       'cost', 'srp', 'promo', 'mp_price', 'b2b_price', 
+                       'supplier_price_date_updated', 'product_price_date_updated', 
+                       'supplier_id', 'sale_tag', 'product_id', 'activity']]
     # rename 
     df_data = df_data.rename(columns = {'name' : 'supplier',
                                         'cost' : 'supplier_price',
