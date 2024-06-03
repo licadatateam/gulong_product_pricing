@@ -494,6 +494,7 @@ if __name__ == "__main__":
             
         else:
             df_supplier = st.session_state['df_supplier']
+            #df_supplier = None
         
         if st.session_state['df_supplier'] is not None:
             st.write(st.session_state['df_supplier'])
@@ -525,8 +526,10 @@ if __name__ == "__main__":
         
         # merge supplier df if uploaded files
         if df_supplier is not None:
-            qty_supp = [f'qty_{s}' for s in list(df_supplier.supplier.unique())]
-            price_supp = [f'price_{s}' for s in list(df_supplier.supplier.unique())]
+            qty_supp = [f'qty_{s}' for s in list(df_supplier.supplier.unique()) \
+                        if f'qty_{s}' in df_supplier.columns]
+            price_supp = [f'price_{s}' for s in list(df_supplier.supplier.unique()) \
+                          if f'price_{s}' in df_supplier.columns]
             supplier_cols = ['similar_pattern', 'correct_specs',
                              'brand'] + qty_supp + price_supp
             

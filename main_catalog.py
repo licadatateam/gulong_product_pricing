@@ -109,7 +109,8 @@ def name_match(s, ref,
         return result
 
 def supplier_clean(ws : pd.DataFrame, 
-                   supplier : str) -> pd.DataFrame:
+                   supplier : str,
+                   ref : pd.DataFrame) -> pd.DataFrame:
     '''
     Custom dataframe cleaning procedure for each supplier format
     
@@ -173,7 +174,7 @@ def supplier_clean(ws : pd.DataFrame,
         df['correct_specs'] = df['size'].apply(lambda x: clean_func.combine_specs(*clean_func.clean_tire_size(x), mode = 'MATCH'))
 
         # 4. determine matching similar model names from reference
-        df[['similar_pattern', 'brand']] = df.apply(lambda x: name_match(x['pattern'], df_gulong),
+        df[['similar_pattern', 'brand']] = df.apply(lambda x: name_match(x['pattern'], ref),
                                                                  axis = 1)
     
     elif supplier == 'ABANTE TIRE MARKETING CORPORATION':
@@ -192,15 +193,15 @@ def supplier_clean(ws : pd.DataFrame,
         ## remove NaN (whole rows and columns with NaN)
         df = df.dropna(axis = 0, how = 'all').dropna(axis = 1, how = 'all')
         # rename columns
-        df.columns = ['sku_name', 'stock']
+        df.columns = ['sku_name', f'qty_{supplier}']
         # extract correct specs
         df['correct_specs'] = df['sku_name'].apply(lambda x: clean_func.combine_specs(*clean_func.clean_tire_size(x), mode = 'MATCH'))
         # extract brand
-        df['brand'] = df['sku_name'].apply(lambda x: clean_func.clean_make(x, df_gulong.brand.unique()))
+        df['brand'] = df['sku_name'].apply(lambda x: clean_func.clean_make(x, ref.brand.unique()))
         # extract pattern
-        df['pattern'] = df['sku_name'].apply(lambda x: clean_func.clean_model(x, df_gulong))
+        df['pattern'] = df['sku_name'].apply(lambda x: clean_func.clean_model(x, ref))
         # get match similar_pattern
-        df['similar_pattern'] = df['sku_name'].apply(lambda x: name_match(x, df_gulong, with_brand = False))
+        df['similar_pattern'] = df['sku_name'].apply(lambda x: name_match(x, ref, with_brand = False))
         
     return df
         
@@ -227,7 +228,8 @@ def extract_supplier_data(file : str or pd.DataFrame,
     ws = ws.replace('^(\s)*$', np.NaN, regex = True)
     
     # 3. clean worksheet dataframe
-    df = supplier_clean(ws, supplier = supplier)
+    df = supplier_clean(ws, supplier = supplier,
+                        ref = df_gulong)
     
     # standardize data
     for c in df.columns:
@@ -246,9 +248,6 @@ def extract_supplier_data(file : str or pd.DataFrame,
     
     return df
     
-
-# get gulong data
-df_gulong = get_gulong_data()
 
 def get_supplier_data_from_dict(files : dict or list,
                                 supp : str = None,
@@ -312,3 +311,6 @@ def match_df(df1, df2):
                                     'size', 'max'],
                          axis = 1)
     return merged
+
+if __name__ == "__main__":
+    df_gulong = get_gulong_data()

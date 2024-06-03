@@ -43,6 +43,14 @@ def files_summary():
         for file in st.session_state['files'][supp]:
             st.write(f'--{file.name}')
 
+@st.cache_data
+def get_supplier_data(files : dict or list,
+                      supp : str = None,
+                      df_gulong : pd.DataFrame = None):
+    
+    df_supplier = main_catalog.get_supplier_data_from_dict(files)
+    return df_supplier
+
 def main():
     # get list of suppliers
     url1 =  "http://app.redash.licagroup.ph/api/queries/131/results.csv?api_key=FqpOO9ePYQhAXrtdqsXSt2ZahnUZ2XCh3ooFogzY"
@@ -81,7 +89,8 @@ def main():
         if len(st.session_state['files']):
         
             try:
-                df_supplier = main_catalog.get_supplier_data_from_dict(st.session_state['files'])
+                df_supplier = get_supplier_data(st.session_state['files'])
+                #df_supplier = main_catalog.get_supplier_data_from_dict(st.session_state['files'])
                 
                 # df_gulong = main_catalog.get_gulong_data()
                 # merged = main_catalog.match_df(df_gulong, df_supplier)
